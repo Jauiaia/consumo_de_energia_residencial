@@ -23,7 +23,7 @@ if uploaded_file:
     df.columns = [col.strip().lower() for col in df.columns]  # Remove espaços e converte para minúsculas
 
     # Nomes esperados das colunas
-    required_columns = ['data/hora', 'consumo_kwh', 'custo_total']
+    required_columns = ['data/hora','consumo_kwh','custo_total']
 
     # Verificação se o arquivo contém as colunas necessárias
     if not all(col in df.columns for col in required_columns):
