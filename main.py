@@ -16,7 +16,7 @@ uploaded_file = st.file_uploader("Carregue seu arquivo CSV", type=["csv"])
 
 if uploaded_file:
     # Leitura do arquivo
-    df = pd.read_excel(uploaded_file)
+    df = pd.read_csv(uploaded_file)
 
     # Normalização dos nomes das colunas
     df.columns = [col.strip().lower() for col in df.columns]  # Remove espaços e converte para minúsculas
