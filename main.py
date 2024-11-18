@@ -2,40 +2,30 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Configuração inicial
+# Configuração inicial da página
 st.set_page_config(page_title="Analisador de Consumo de Energia", layout="wide")
 
+# Título e descrição
 st.title("Analisador de Consumo de Energia Residencial")
 st.markdown("""
-Este webapp permite que você analise seu consumo de energia residencial ao longo de um mês.
-Carregue um arquivo CSV com os dados de consumo para começar!
+    Este webapp permite que você analise seu consumo de energia residencial ao longo de um mês.
+    Carregue um arquivo CSV com os dados de consumo para começar!
 """)
 
 # Upload do arquivo CSV
 uploaded_file = st.file_uploader("Carregue seu arquivo CSV", type=["csv"])
 
 if uploaded_file:
-    # Leitura do arquivo
+    # Leitura do arquivo CSV
     df = pd.read_csv(uploaded_file)
 
-    # Mapeamento das colunas para os nomes esperados
-    column_mapping = {
-        'data/hora': ['data/hora', 'datahora'],
-        'consumo_kwh': ['consumo em kwh', 'consumo_kwh', 'consumo_kwh_'],
-        'custo_total': ['custo total', 'custo_total']
-    }
+    # Normalização dos nomes das colunas
+    df.columns = [col.strip().lower() for col in df.columns]  # Remove espaços e converte para minúsculas
 
-    # Renomeando as colunas do DataFrame conforme o mapeamento
-    for col, possible_names in column_mapping.items():
-        for name in possible_names:
-            if name in df.columns:
-                df.rename(columns={name: col}, inplace=True)
-                break
-
-    # Nomes esperados
+    # Nomes esperados das colunas
     required_columns = ['data/hora', 'consumo_kwh', 'custo_total']
 
-    # Verificação de colunas
+    # Verificação se o arquivo contém as colunas necessárias
     if not all(col in df.columns for col in required_columns):
         st.error(f"O arquivo deve conter as colunas: {', '.join(required_columns)}. Colunas encontradas: {', '.join(df.columns)}")
     else:
@@ -45,11 +35,11 @@ if uploaded_file:
         df['data'] = df['data/hora'].dt.date
         df['hora'] = df['data/hora'].dt.hour
 
-        # Exibição dos dados
+        # Exibição dos dados carregados
         st.subheader("Dados Carregados")
         st.dataframe(df)
 
-        # Filtro de período
+        # Filtros de período
         st.sidebar.header("Filtros de Período")
         start_date = st.sidebar.date_input("Data de Início", value=min(df['data']))
         end_date = st.sidebar.date_input("Data de Fim", value=max(df['data']))
@@ -59,43 +49,43 @@ if uploaded_file:
         else:
             # Filtragem dos dados
             filtered_df = df[(df['data'] >= start_date) & (df['data'] <= end_date)]
-            
-            # Consumo total por dia
+
+            # Gráfico de consumo total por dia
             daily_consumption = filtered_df.groupby('data').sum(numeric_only=True).reset_index()
-            max_consumption_day = daily_consumption.loc[daily_consumption['consumo_kwh'].idxmax()]
-            
+            max_consumption_day = daily_consumption.loc[daily_consumption['consumo em kwh'].idxmax()]
+
             st.subheader("Gráfico: Consumo Total por Dia")
             bar_fig = px.bar(
                 daily_consumption,
                 x='data',
-                y='consumo_kwh',
+                y='consumo em kwh',
                 title='Consumo Total por Dia',
-                labels={'consumo_kwh': 'Consumo (kWh)'},
-                color='consumo_kwh',
+                labels={'consumo em kwh': 'Consumo (kWh)'},
+                color='consumo em kwh',
                 color_continuous_scale='Viridis',
             )
             bar_fig.add_annotation(
                 x=max_consumption_day['data'],
-                y=max_consumption_day['consumo_kwh'],
+                y=max_consumption_day['consumo em kwh'],
                 text="Maior Consumo",
                 showarrow=True,
                 arrowhead=3
             )
             st.plotly_chart(bar_fig, use_container_width=True)
 
-            # Consumo médio por hora
+            # Gráfico de consumo médio por hora
             hourly_consumption = filtered_df.groupby('hora').mean(numeric_only=True).reset_index()
             st.subheader("Gráfico: Consumo Médio por Hora")
             line_fig = px.line(
                 hourly_consumption,
                 x='hora',
-                y='consumo_kwh',
+                y='consumo em kwh',
                 title='Consumo Médio por Hora',
-                labels={'consumo_kwh': 'Consumo Médio (kWh)', 'hora': 'Hora do Dia'},
+                labels={'consumo em kwh': 'Consumo Médio (kWh)', 'hora': 'Hora do Dia'},
             )
             st.plotly_chart(line_fig, use_container_width=True)
 
-            # Distribuição percentual por categorias
+            # Gráfico de distribuição percentual por categorias (Madrugada, Pico, Noturno)
             st.subheader("Gráfico: Distribuição Percentual")
             bins = [-1, 5, 17, 22, 24]
             labels = ['Madrugada', 'Pico', 'Noturno', 'Madrugada']
@@ -105,7 +95,7 @@ if uploaded_file:
             category_consumption = filtered_df.groupby('categoria').sum(numeric_only=True).reset_index()
             pie_fig = px.pie(
                 category_consumption,
-                values='consumo_kwh',
+                values='consumo em kwh',
                 names='categoria',
                 title='Distribuição Percentual do Consumo'
             )
@@ -113,15 +103,15 @@ if uploaded_file:
 
             # Comparação entre consumo médio e consumo diário no período filtrado
             st.subheader("Comparação de Consumo")
-            overall_daily_avg = df.groupby('data')['consumo_kwh'].sum().mean()
-            period_daily_avg = filtered_df.groupby('data')['consumo_kwh'].sum().mean()
+            overall_daily_avg = df.groupby('data')['consumo em kwh'].sum().mean()
+            period_daily_avg = filtered_df.groupby('data')['consumo em kwh'].sum().mean()
             st.write(f"**Consumo Médio Diário Geral:** {overall_daily_avg:.2f} kWh")
             st.write(f"**Consumo Médio Diário no Período Filtrado:** {period_daily_avg:.2f} kWh")
 
             # Consumo total e custo total no período filtrado
             st.sidebar.header("Resumo do Período")
-            st.sidebar.write(f"*Consumo Total (kWh):* {filtered_df['consumo_kwh'].sum():.2f}")
-            st.sidebar.write(f"*Custo Total (R$):* {filtered_df['custo_total'].sum():.2f}")
+            st.sidebar.write(f"*Consumo Total (kWh):* {filtered_df['consumo em kwh'].sum():.2f}")
+            st.sidebar.write(f"*Custo Total (R$):* {filtered_df['custo total'].sum():.2f}")
 
 else:
     st.info("Por favor, carregue um arquivo CSV para começar.")
