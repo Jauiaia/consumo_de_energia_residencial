@@ -22,7 +22,7 @@ if uploaded_file:
     df.columns = [col.strip().lower() for col in df.columns]  # Remove espaços e converte para minúsculas
 
     # Nomes esperados
-    required_columns = ['data/hora', 'consumo_kwh', 'custo_total']
+    required_columns = ['Data/Hora', 'Consumo_kwh', 'Custo_Total']
 
     # Verificação de colunas
     if not all(col in df.columns for col in required_columns):
@@ -57,15 +57,15 @@ if uploaded_file:
             bar_fig = px.bar(
                 daily_consumption,
                 x='data',
-                y='consumo em kwh',
+                y='consumo_kwh',
                 title='Consumo Total por Dia',
-                labels={'consumo em kwh': 'Consumo (kWh)'},
-                color='consumo em kwh',
+                labels={'consumo_kwh': 'Consumo (kWh)'},
+                color='consumo_kwh',
                 color_continuous_scale='Viridis',
             )
             bar_fig.add_annotation(
                 x=max_consumption_day['data'],
-                y=max_consumption_day['consumo em kwh'],
+                y=max_consumption_day['consumo_kwh'],
                 text="Maior Consumo",
                 showarrow=True,
                 arrowhead=3
@@ -78,9 +78,9 @@ if uploaded_file:
             line_fig = px.line(
                 hourly_consumption,
                 x='hora',
-                y='consumo em kwh',
+                y='consumo_kwh',
                 title='Consumo Médio por Hora',
-                labels={'consumo em kwh': 'Consumo Médio (kWh)', 'hora': 'Hora do Dia'},
+                labels={'consumo_kwh': 'Consumo Médio (kWh)', 'hora': 'Hora do Dia'},
             )
             st.plotly_chart(line_fig, use_container_width=True)
 
